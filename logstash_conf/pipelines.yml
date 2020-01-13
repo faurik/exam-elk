@@ -1,0 +1,5 @@
+- pipeline.id: kafka
+  pipeline.workers: 1
+  pipeline.batch.size: 100
+  pipeline.batch.delay: 1000
+  path.config: /usr/share/logstash/config/kafka-pipeline.conf

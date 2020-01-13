@@ -1,0 +1,15 @@
+filebeat.inputs:
+  - type: kafka
+    hosts:
+      - kafka:9092
+    topics: ["system-logs"]
+    group_id: "filebeat"
+
+output.elasticsearch:
+  hosts: ["http://es:9200"]
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~

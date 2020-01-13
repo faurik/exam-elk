@@ -1,0 +1,88 @@
+version: '3'
+services: 
+  es:
+    container_name: es
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
+    environment:
+      discovery.type: single-node
+      xpack.ml.enabled: 'false'
+    networks:
+      - elastic
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.5.1
+    environment:
+      ELASTICSEARCH_HOSTS: http://es:9200
+    depends_on:
+      - es
+    networks:
+      - elastic
+    ports:
+      - 5601:5601
+
+  zookeeper:
+    container_name: zookeeper
+    image: wurstmeister/zookeeper:latest
+    networks:
+      - elastic
+    ports:
+      - 2181:2181
+
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka:latest
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "system-logs:1:1"
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+    depends_on:
+      - zookeeper
+    networks:
+      - elastic
+    ports:
+      - 9092:9092
+
+  filebeat_to_kafka:
+    container_name: filebeat_to_kafka
+    image: docker.elastic.co/beats/filebeat:7.5.1
+    depends_on:
+      - kafka
+    networks:
+      - elastic
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log:ro
+      - /usr/share/filebeat/data
+  
+#  filebeat_to_es:
+#    container_name: filebeat_to_es
+#    image: docker.elastic.co/beats/filebeat:7.5.1
+#    depends_on:
+#      - kafka
+#    networks:
+#      - elastic
+#    volumes:
+#      - ./filebeat_es.yml:/usr/share/filebeat/filebeat.yml:ro
+#      - /usr/share/filebeat/data
+
+  logstash:
+    container_name: logstash
+    image: docker.elastic.co/logstash/logstash:7.5.1
+    networks:
+      - elastic
+    volumes:
+      - ./logstash_conf/:/usr/share/logstash/config/:ro
+
+networks:
+  elastic:
+    driver: bridge
+
+volumes:
+  es_data:
+    driver: local

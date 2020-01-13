@@ -1,0 +1,16 @@
+filebeat.modules:
+  - module: system
+output.kafka:
+  hosts: ["kafka:9092"]
+  topic: 'system-logs'
+  partition.round_robin:
+    reachable_only: true
+  required_acks: 1
+  compression: gzip
+  max_message_bytes: 1000000
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+  
